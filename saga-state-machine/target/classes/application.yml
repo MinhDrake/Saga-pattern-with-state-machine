@@ -1,0 +1,19 @@
+# Saga State Machine - Application Configuration
+# ==============================================
+# This is a learning project demonstrating Saga Pattern and State Machine.
+
+spring:
+  application:
+    name: saga-state-machine
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.learning.saga: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Server configuration (for future REST API)
+server:
+  port: 8080

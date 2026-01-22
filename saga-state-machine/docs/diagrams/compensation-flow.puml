@@ -1,0 +1,70 @@
+@startuml Compensation Flow
+
+title Saga Compensation Flow (Step 3 Fails)
+
+skinparam participant {
+    BackgroundColor<<service>> LightBlue
+    BackgroundColor<<engine>> LightGreen
+}
+
+actor Customer
+participant "SagaEngine" as Engine <<engine>>
+participant "RevertingHandler" as Handler <<engine>>
+database "Database" as DB
+
+box "External Services" #LightYellow
+participant "Inventory" as Inventory <<service>>
+participant "Payment" as Payment <<service>>
+participant "Shipping" as Shipping <<service>>
+end box
+
+== Forward Flow (Steps 1-2 Succeed) ==
+
+Engine -> Inventory: Reserve inventory
+Inventory --> Engine: ✓ Reserved
+
+Engine -> Payment: Charge payment
+Payment --> Engine: ✓ Charged
+
+== Step 3 Fails ==
+
+Engine -> Shipping: Create shipment
+Shipping --> Engine: ✗ Failed (no drivers)
+
+Engine -> Engine: evaluateFailedStep()
+note right: Step 2 succeeded → need compensation
+
+Engine -> DB: Update status (REVERTING)
+
+== Compensation Flow (Reverse Order) ==
+
+Engine -> Handler: process(REVERTING)
+
+Handler -> Handler: Get steps needing\ncompensation (reverse order)
+note right
+    Compensation order:
+    1. Payment (refund)
+    2. Inventory (release)
+    
+    NOT shipping (failed, nothing to undo)
+end note
+
+Handler -> Payment: POST /refund
+activate Payment
+Payment --> Handler: Refunded ✓
+deactivate Payment
+Handler -> DB: Save compensation step
+
+Handler -> Inventory: POST /release
+activate Inventory
+Inventory --> Handler: Released ✓
+deactivate Inventory
+Handler -> DB: Save compensation step
+
+== Completion ==
+
+Handler -> DB: Update status (REVERTED)
+Handler -> Handler: Run After Hooks\n(notify customer of failure)
+Engine --> Customer: Order failed (refunded)
+
+@enduml

@@ -1,0 +1,31 @@
+# Saga State Machine Learning Project Configuration
+
+spring:
+  application:
+    name: saga-state-machine
+
+server:
+  port: 8080
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.learning.saga: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Custom saga configuration
+saga:
+  # Default timeout for sagas (in minutes)
+  default-timeout-minutes: 30
+  
+  # Minimum time reserved for compensation
+  min-compensation-timeout-minutes: 5
+  
+  # Recovery job configuration
+  recovery:
+    enabled: true
+    interval-seconds: 60
+    stuck-threshold-minutes: 5
+    batch-size: 100
